@@ -6,7 +6,7 @@
 
 deploy = '/srv/boxed-app'
 app_repo = 'https://github.com/daxroc/boxed-app.git'
-user = 'webapps'
+owner = 'webapps'
 group = 'webapps'
 
 #
@@ -15,7 +15,7 @@ include_recipe 'boxed-rails::build_essential'
 
 
 directory deploy do
-  user user
+  owner owner
   group group
   action :create
   recursive true
@@ -27,32 +27,72 @@ include_recipe 'yum-epel'
 package 'nodejs'
 package 'git'
 
-# Source code checkout
-git deploy do
-  repository app_repo
-  user user
-  group group
-end
-
-
 # Database
 package 'sqlite-devel'
 
-# Application setup/config
+
+git deploy do
+  repository app_repo
+  revision 'deploy'
+  action :sync
+  user owner
+  group group
+end
+
+#node.default['poise-ruby']['install_chef_ruby'] = false
+
+#ruby_runtime '2.2'
+#ruby_gem 'rake'
+#ruby_gem 'bundler'
+
+bundle_install deploy do
+  without %w{development test}
+  deployment true
+end
+
 application deploy do
-#  user user
-#  group group
+  rails do
+    secret_token 'abc123'
+  end
+  unicorn do
+    port 8000
+  end
+end
+
+
+
+
+
+
+return
+
+application '/boxed' do
+  ruby '2.2'
+  ruby_gem 'bundler'
+  owner owner
+  group group
+end
+
+application '/boxed' do
+  owner owner
+  group group
+#  ruby '2.2'
+#  ruby_gem 'bundler'
+  git do
+    repository app_repo
+    checkout_branch 'deploy'
+  end
+  rails do
+#    database 'sqlite3:///db.sqlite3'
+    secret_token 'dbajaosjasof30'
+#    migrate true
+  end
   bundle_install do
     deployment true
     without %w{development test}
   end
-  rails do
-    database 'sqlite3:///db.sqlite3'
-    secret_token 'd78fe08df56c9'
-    migrate true
-  end
   unicorn do
     port 8000
-    action [:start, :enable]
   end
-end
+end 
+

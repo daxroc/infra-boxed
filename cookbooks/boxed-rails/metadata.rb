@@ -8,4 +8,5 @@ version          '0.1.0'
 
 depends 'yum-epel'
 depends 'build-essential'
+depends 'poise-ruby-build'
 depends 'application_ruby'
