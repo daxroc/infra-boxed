@@ -9,11 +9,48 @@ app_repo = 'https://github.com/daxroc/boxed-app.git'
 owner = 'webapps'
 group = 'webapps'
 
-#
-include_recipe 'boxed-rails::users'
+include_recipe 'yum-epel'
+# include_recipe 'boxed-rails::users'
 include_recipe 'boxed-rails::build_essential'
 
+package %w{nodejs git sqlite-devel}
 
+
+poise_service_user 'webapps'
+
+application deploy do
+  
+  owner 'webapps'
+  group 'webapps'
+
+  git app_repo do
+    revision 'deploy'
+  end
+
+  ruby do
+    version '2.2'
+  end
+
+  bundle_install do
+    without %w{development test}
+    deployment true
+  end
+
+  rails do 
+    secret_token 'abc123'
+  end
+
+  unicorn do
+    port 8000
+  end
+
+end
+
+
+# 
+return 
+
+# Create directories
 directory deploy do
   owner owner
   group group
@@ -21,13 +58,17 @@ directory deploy do
   recursive true
 end
 
+
 # Enable EPEL 
 include_recipe 'yum-epel'
 
+
+# Install required packages
 package 'nodejs'
 package 'git'
 
-# Database
+
+# Support for Database
 package 'sqlite-devel'
 
 
